@@ -58,13 +58,15 @@
 
     thead th:first-child { padding-left: 0; }
 
-    tbody tr {
+    tbody tr.main-row {
       border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
-    tbody tr:last-child {
-      border-bottom: none;
-    }
+    tbody tr.main-row:hover { background: #fafafa; }
+
+    tbody tr.main-row.open { border-bottom: none; }
 
     tbody td {
       padding: 13px 12px;
@@ -73,20 +75,51 @@
 
     tbody td:first-child { padding-left: 0; }
 
-    .medal {
-      font-size: 1.1rem;
-      width: 32px;
+    .medal { font-size: 1.1rem; width: 32px; }
+
+    .name { font-weight: 600; color: #111; }
+
+    .chevron {
+      display: inline-block;
+      color: #bbb;
+      font-size: 1rem;
+      margin-left: 6px;
+      transition: transform 0.2s;
     }
 
-    .name {
-      font-weight: 600;
-      color: #111;
+    .chevron.open { transform: rotate(90deg); color: #888; }
+
+    .score { font-weight: 700; color: #e3500a; }
+
+    /* Detail row — always in DOM, animates via max-height */
+    .detail { background: #fafafa; border-bottom: 1px solid #f0f0f0; }
+
+    .detail > td { padding: 0; }
+
+    .detail-inner {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 12px 0 44px;
     }
 
-    .score {
-      font-weight: 700;
-      color: #e3500a;
+    .detail.open .detail-inner {
+      max-height: 200px;
+      padding: 12px 12px 16px 44px;
     }
+
+    .detail-grid { display: flex; flex-direction: column; gap: 6px; }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.82rem;
+    }
+
+    .detail-metric { color: #888; width: 160px; flex-shrink: 0; }
+    .detail-value { font-weight: 600; width: 60px; }
+    .detail-rank { color: #aaa; }
   </style>
 </head>
 <body>
@@ -107,53 +140,209 @@
       </thead>
       <tbody>
         
-        <tr>
+        <tr class="main-row" onclick="toggle(0)">
             <td class="medal">🥇</td>
-            <td class="name">pauldambra</td>
-            <td class="score">289.9</td>
+            <td class="name">pauldambra <span class="chevron" id="chevron-0">›</span></td>
+            <td class="score">6.7</td>
             <td>218</td>
             <td>17.0</td>
             <td>81%</td>
             <td>5.9h</td>
         </tr>
-        <tr>
+        
+        <tr class="detail" id="detail-0">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">218</span>
+                <span class="detail-rank">1st of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">17.0</span>
+                <span class="detail-rank">1st of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">81%</span>
+                <span class="detail-rank">57th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">5.9h</span>
+                <span class="detail-rank">37th of 134 engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr class="main-row" onclick="toggle(1)">
             <td class="medal">🥈</td>
-            <td class="name">andrewm4894</td>
-            <td class="score">270.0</td>
+            <td class="name">andrewm4894 <span class="chevron" id="chevron-1">›</span></td>
+            <td class="score">6.5</td>
             <td>203</td>
             <td>15.8</td>
             <td>76%</td>
             <td>4.6h</td>
         </tr>
-        <tr>
-            <td class="medal">🥉</td>
-            <td class="name">adboio</td>
-            <td class="score">223.5</td>
-            <td>168</td>
-            <td>13.1</td>
-            <td>81%</td>
-            <td>1.6d</td>
+        
+        <tr class="detail" id="detail-1">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">203</span>
+                <span class="detail-rank">2nd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">15.8</span>
+                <span class="detail-rank">2nd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">76%</span>
+                <span class="detail-rank">75th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">4.6h</span>
+                <span class="detail-rank">31st of 134 engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
         </tr>
-        <tr>
-            <td class="medal">4</td>
-            <td class="name">rafaeelaudibert</td>
-            <td class="score">216.9</td>
+        <tr class="main-row" onclick="toggle(2)">
+            <td class="medal">🥉</td>
+            <td class="name">rafaeelaudibert <span class="chevron" id="chevron-2">›</span></td>
+            <td class="score">6.5</td>
             <td>163</td>
             <td>12.7</td>
             <td>91%</td>
             <td>19.2h</td>
         </tr>
-        <tr>
+        
+        <tr class="detail" id="detail-2">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">163</span>
+                <span class="detail-rank">4th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">12.7</span>
+                <span class="detail-rank">4th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">91%</span>
+                <span class="detail-rank">8th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">19.2h</span>
+                <span class="detail-rank">72nd of 134 engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr class="main-row" onclick="toggle(3)">
+            <td class="medal">4</td>
+            <td class="name">adboio <span class="chevron" id="chevron-3">›</span></td>
+            <td class="score">6.4</td>
+            <td>168</td>
+            <td>13.1</td>
+            <td>81%</td>
+            <td>1.6d</td>
+        </tr>
+        
+        <tr class="detail" id="detail-3">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">168</span>
+                <span class="detail-rank">3rd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">13.1</span>
+                <span class="detail-rank">3rd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">81%</span>
+                <span class="detail-rank">53rd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">1.6d</span>
+                <span class="detail-rank">102nd of 134 engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr class="main-row" onclick="toggle(4)">
             <td class="medal">5</td>
-            <td class="name">webjunkie</td>
-            <td class="score">173.1</td>
-            <td>130</td>
-            <td>10.1</td>
-            <td>80%</td>
-            <td>12.3h</td>
+            <td class="name">jonmcwest <span class="chevron" id="chevron-4">›</span></td>
+            <td class="score">6.2</td>
+            <td>121</td>
+            <td>9.4</td>
+            <td>84%</td>
+            <td>3.7h</td>
+        </tr>
+        
+        <tr class="detail" id="detail-4">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">121</span>
+                <span class="detail-rank">6th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">9.4</span>
+                <span class="detail-rank">6th of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">84%</span>
+                <span class="detail-rank">32nd of 134 engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">3.7h</span>
+                <span class="detail-rank">24th of 134 engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
         </tr>
       </tbody>
     </table>
   </div>
+  <script>
+    function toggle(i) {
+      const detail  = document.getElementById('detail-' + i);
+      const chevron = document.getElementById('chevron-' + i);
+      const mainRow = detail.previousElementSibling;
+      const isOpen  = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      chevron.classList.toggle('open', !isOpen);
+      mainRow.classList.toggle('open', !isOpen);
+    }
+  </script>
 </body>
 </html>

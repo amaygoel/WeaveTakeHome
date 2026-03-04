@@ -4,7 +4,7 @@ import math
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analysis'))
-from compute_scores import get_top_engineers
+from compute_scores import get_top_engineers, compute_scores
 
 MEDALS = ["🥇", "🥈", "🥉", "4", "5"]
 
@@ -15,21 +15,70 @@ def fmt_merge_time(hours):
         return f"{hours:.1f}h"
     return f"{hours / 24:.1f}d"
 
+def ordinal(n):
+    if 11 <= n % 100 <= 13:
+        return f"{n}th"
+    return f"{n}{['th','st','nd','rd','th'][min(n % 10, 4)]}"
+
 def generate():
     top5 = get_top_engineers(5)
+    all_eng = compute_scores()
+    total = len(all_eng)
+
+    # Precompute ranks (1 = best)
+    all_eng['rank_prs_merged']  = all_eng['prs_merged'].rank(ascending=False, method='min').astype(int)
+    all_eng['rank_prs_per_week'] = all_eng['prs_per_week'].rank(ascending=False, method='min').astype(int)
+    all_eng['rank_merge_rate']  = all_eng['merge_rate'].rank(ascending=False, method='min').astype(int)
+    all_eng['rank_merge_time']  = all_eng['median_merge_time_hours'].rank(ascending=True, method='min', na_option='bottom').astype(int)
+
+    ranks = all_eng.set_index('login')
 
     rows_html = ""
     for i, row in top5.iterrows():
+        login = row['login']
+        r = ranks.loc[login]
+
+        detail_html = f"""
+        <tr class="detail" id="detail-{i}">
+          <td colspan="7">
+            <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-metric">PRs Merged</span>
+                <span class="detail-value">{int(row['prs_merged'])}</span>
+                <span class="detail-rank">{ordinal(r['rank_prs_merged'])} of {total} engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">PRs / Week</span>
+                <span class="detail-value">{row['prs_per_week']:.1f}</span>
+                <span class="detail-rank">{ordinal(r['rank_prs_per_week'])} of {total} engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Merge Rate</span>
+                <span class="detail-value">{row['merge_rate']:.0%}</span>
+                <span class="detail-rank">{ordinal(r['rank_merge_rate'])} of {total} engineers</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-metric">Median Merge Time</span>
+                <span class="detail-value">{fmt_merge_time(row['median_merge_time_hours'])}</span>
+                <span class="detail-rank">{ordinal(r['rank_merge_time'])} of {total} engineers</span>
+              </div>
+            </div>
+            </div>
+          </div></td>
+        </tr>"""
+
         rows_html += f"""
-        <tr>
+        <tr class="main-row" onclick="toggle({i})">
             <td class="medal">{MEDALS[i]}</td>
-            <td class="name">{row['login']}</td>
+            <td class="name">{login} <span class="chevron" id="chevron-{i}">›</span></td>
             <td class="score">{row['impact_score']:.1f}</td>
             <td>{int(row['prs_merged'])}</td>
             <td>{row['prs_per_week']:.1f}</td>
             <td>{row['merge_rate']:.0%}</td>
             <td>{fmt_merge_time(row['median_merge_time_hours'])}</td>
-        </tr>"""
+        </tr>
+        {detail_html}"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -91,13 +140,15 @@ def generate():
 
     thead th:first-child {{ padding-left: 0; }}
 
-    tbody tr {{
+    tbody tr.main-row {{
       border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.15s;
     }}
 
-    tbody tr:last-child {{
-      border-bottom: none;
-    }}
+    tbody tr.main-row:hover {{ background: #fafafa; }}
+
+    tbody tr.main-row.open {{ border-bottom: none; }}
 
     tbody td {{
       padding: 13px 12px;
@@ -106,20 +157,51 @@ def generate():
 
     tbody td:first-child {{ padding-left: 0; }}
 
-    .medal {{
-      font-size: 1.1rem;
-      width: 32px;
+    .medal {{ font-size: 1.1rem; width: 32px; }}
+
+    .name {{ font-weight: 600; color: #111; }}
+
+    .chevron {{
+      display: inline-block;
+      color: #bbb;
+      font-size: 1rem;
+      margin-left: 6px;
+      transition: transform 0.2s;
     }}
 
-    .name {{
-      font-weight: 600;
-      color: #111;
+    .chevron.open {{ transform: rotate(90deg); color: #888; }}
+
+    .score {{ font-weight: 700; color: #e3500a; }}
+
+    /* Detail row — always in DOM, animates via max-height */
+    .detail {{ background: #fafafa; border-bottom: 1px solid #f0f0f0; }}
+
+    .detail > td {{ padding: 0; }}
+
+    .detail-inner {{
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 12px 0 44px;
     }}
 
-    .score {{
-      font-weight: 700;
-      color: #e3500a;
+    .detail.open .detail-inner {{
+      max-height: 200px;
+      padding: 12px 12px 16px 44px;
     }}
+
+    .detail-grid {{ display: flex; flex-direction: column; gap: 6px; }}
+
+    .detail-row {{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.82rem;
+    }}
+
+    .detail-metric {{ color: #888; width: 160px; flex-shrink: 0; }}
+    .detail-value {{ font-weight: 600; width: 60px; }}
+    .detail-rank {{ color: #aaa; }}
   </style>
 </head>
 <body>
@@ -143,6 +225,17 @@ def generate():
       </tbody>
     </table>
   </div>
+  <script>
+    function toggle(i) {{
+      const detail  = document.getElementById('detail-' + i);
+      const chevron = document.getElementById('chevron-' + i);
+      const mainRow = detail.previousElementSibling;
+      const isOpen  = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      chevron.classList.toggle('open', !isOpen);
+      mainRow.classList.toggle('open', !isOpen);
+    }}
+  </script>
 </body>
 </html>"""
 
